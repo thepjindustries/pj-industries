@@ -1,0 +1,240 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Cattle feed product manufactured by PJ Industries",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nameMr": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "descriptionMr": { "type": "string" },
+        "advantages": { "type": "array" },
+        "advantagesMr": { "type": "array" },
+        "ingredients": { "type": "array" },
+        "ingredientsMr": { "type": "array" },
+        "usage": { "type": "string" },
+        "usageMr": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["Available", "Out of Stock"] }
+      },
+      "required": ["id", "name", "nameMr", "image", "description", "price", "status"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee or staff member of PJ Industries",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "mobile": { "type": "string" },
+        "address": { "type": "string" },
+        "dob": { "type": "string" },
+        "joiningDate": { "type": "string" },
+        "aadhaar": { "type": "string" },
+        "pan": { "type": "string" },
+        "bankDetails": {
+          "type": "object",
+          "properties": {
+            "accountNo": { "type": "string" },
+            "ifsc": { "type": "string" },
+            "bankName": { "type": "string" }
+          },
+          "required": ["accountNo", "ifsc", "bankName"]
+        },
+        "department": { "type": "string" },
+        "designation": { "type": "string" },
+        "salary": { "type": "number" },
+        "profilePhoto": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      },
+      "required": ["id", "fullName", "email", "mobile", "department", "designation", "username", "password"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Attendance clock-in and clock-out event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "department": { "type": "string" },
+        "date": { "type": "string" },
+        "punchIn": { "type": "string" },
+        "punchOut": { "type": "string" },
+        "totalHours": { "type": "number" }
+      },
+      "required": ["id", "employeeId", "employeeName", "department", "date", "punchIn"]
+    },
+    "LeaveRequest": {
+      "title": "LeaveRequest",
+      "description": "Leave application submitted by employee",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "department": { "type": "string" },
+        "leaveType": { "type": "string" },
+        "reason": { "type": "string" },
+        "fromDate": { "type": "string" },
+        "toDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "employeeName", "leaveType", "reason", "fromDate", "toDate", "status"]
+    },
+    "EodReport": {
+      "title": "EodReport",
+      "description": "End Of Day report submitted by staff member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "department": { "type": "string" },
+        "date": { "type": "string" },
+        "answers": {
+          "type": "array"
+        },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["id", "employeeId", "employeeName", "department", "date", "answers", "submittedAt"]
+    },
+    "DepartmentConfig": {
+      "title": "DepartmentConfig",
+      "description": "Dynamic questions config for EOD reports on per department basis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "questions": { "type": "array" }
+      },
+      "required": ["id", "questions"]
+    },
+    "ContactInquiry": {
+      "title": "ContactInquiry",
+      "description": "Customer inquiry coming from the public contact us form",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "mobile": { "type": "string" },
+        "email": { "type": "string" },
+        "productInquiry": { "type": "string" },
+        "message": { "type": "string" },
+        "submittedAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["Unread", "Reviewed", "Resolved"] }
+      },
+      "required": ["id", "fullName", "mobile", "message", "submittedAt"]
+    },
+    "DealerInquiry": {
+      "title": "DealerInquiry",
+      "description": "Dealers who submit franchise or dealership application",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "businessName": { "type": "string" },
+        "mobile": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "district": { "type": "string" },
+        "state": { "type": "string" },
+        "experience": { "type": "string" },
+        "interestedProduct": { "type": "string" },
+        "message": { "type": "string" },
+        "submittedAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] }
+      },
+      "required": ["id", "fullName", "mobile", "address", "district", "state", "status", "submittedAt"]
+    },
+    "FarmerFeedback": {
+      "title": "FarmerFeedback",
+      "description": "Public feedback and rating submitted by cattle farmers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "mobile": { "type": "string" },
+        "village": { "type": "string" },
+        "district": { "type": "string" },
+        "rating": { "type": "number" },
+        "review": { "type": "string" },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["id", "fullName", "rating", "review", "submittedAt"]
+    },
+    "AboutUs": {
+      "title": "AboutUs",
+      "description": "CMS company configurations including about story, vision, certifications, dynamic process pictures",
+      "type": "object",
+      "properties": {
+        "story": { "type": "string" },
+        "storyMr": { "type": "string" },
+        "mission": { "type": "string" },
+        "missionMr": { "type": "string" },
+        "vision": { "type": "string" },
+        "visionMr": { "type": "string" },
+        "foundationDate": { "type": "string" },
+        "founderName": { "type": "string" },
+        "founderBio": { "type": "string" },
+        "founderPhoto": { "type": "string" },
+        "heroPhoto": { "type": "string" },
+        "heroPhotos": { "type": "array" },
+        "productOverviewPhoto": { "type": "string" },
+        "factoryDetails": { "type": "string" },
+        "productionProcess": { "type": "string" },
+        "certifications": { "type": "array" },
+        "productionPhotos": { "type": "array" }
+      },
+      "required": ["story", "storyMr", "mission", "missionMr", "vision", "visionMr"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Interactive and listable company product catalog"
+    },
+    "/employees/{employeeId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Secured employee list profile"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Daily staff clock logs"
+    },
+    "/leaves/{leaveId}": {
+      "schema": { "$ref": "#/entities/LeaveRequest" },
+      "description": "Leave requests collection"
+    },
+    "/eod_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/EodReport" },
+      "description": "Daily shift questions form responses submitted by staff"
+    },
+    "/department_configs/{configId}": {
+      "schema": { "$ref": "#/entities/DepartmentConfig" },
+      "description": "List of dynamic questions categories"
+    },
+    "/contact_queries/{queryId}": {
+      "schema": { "$ref": "#/entities/ContactInquiry" },
+      "description": "Public customer feedback contact inquiries"
+    },
+    "/dealer_queries/{dealerId}": {
+      "schema": { "$ref": "#/entities/DealerInquiry" },
+      "description": "Dealer applications"
+    },
+    "/feedbacks/{feedbackId}": {
+      "schema": { "$ref": "#/entities/FarmerFeedback" },
+      "description": "Farmer rating testimonials"
+    },
+    "/configs/{configId}": {
+      "schema": { "$ref": "#/entities/AboutUs" },
+      "description": "CMS text content configurations like about_us"
+    }
+  }
+}

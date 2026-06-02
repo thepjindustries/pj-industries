@@ -1,0 +1,6 @@
+{
+  "name": "PJ INDUSTRIES - DOODHURJA Cattle Feed Management",
+  "description": "Professional cattle feed management system and product showcase for PJ Industries Brand 'Doodhurja'. Tracks employee attendance, EOD reports, and handles dealer and customer queries.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
