@@ -73,7 +73,7 @@ export default function Header({
               >
                 {!logoError ? (
                   <img 
-                    src="logo.png" 
+                    src="logo.jpeg" 
                     alt="PJ Logo" 
                     className="max-w-full max-h-fullw-full h-full object-contain p-1 bg-white"
                     onError={() => setLogoError(true)}
