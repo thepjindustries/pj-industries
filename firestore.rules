@@ -151,5 +151,32 @@ service cloud.firestore {
       allow delete: if isValidId(configId);
     }
 
+    // 11. Jobs Collection Rules
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create, update: if isValidId(jobId) &&
+                   incoming().id is string &&
+                   incoming().title is string &&
+                   incoming().description is string &&
+                   incoming().workingTime is string &&
+                   incoming().type is string;
+      allow delete: if isValidId(jobId);
+    }
+
+    // 12. Career Applications Collection Rules
+    match /career_applications/{appId} {
+      allow read: if true;
+      allow create, update: if isValidId(appId) &&
+                   incoming().id is string &&
+                   incoming().jobId is string &&
+                   incoming().jobTitle is string &&
+                   incoming().fullName is string &&
+                   incoming().village is string &&
+                   incoming().mobile is string &&
+                   incoming().email is string &&
+                   incoming().gender is string;
+      allow delete: if isValidId(appId);
+    }
+
   }
 }
