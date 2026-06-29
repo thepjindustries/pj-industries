@@ -24,7 +24,8 @@ import {
   Clock,
   Calendar,
   MessageSquare,
-  Heart
+  Heart,
+  Briefcase
 } from 'lucide-react';
 import { 
   dbStore, 
@@ -45,7 +46,10 @@ import {
   DEFAULT_ABOUT_US,
   STATE_DISTRICTS,
   calculateHoursBetween,
-  formatPreciseDuration
+  formatPreciseDuration,
+  JobPost,
+  JobApplication,
+  INITIAL_JOBS
 } from '../db';
 
 interface AdminDashboardProps {
@@ -97,6 +101,29 @@ export default function AdminDashboard({ lang, onRefreshData }: AdminDashboardPr
   const [farmerFeedbacks, setFarmerFeedbacks] = useState<FarmerFeedback[]>([]);
   const [aboutUs, setAboutUs] = useState<AboutUsData | null>(null);
 
+  // Job Openings & Career Applications States
+  const [jobsList, setJobsList] = useState<JobPost[]>([]);
+  const [jobApplicationsList, setJobApplicationsList] = useState<JobApplication[]>([]);
+  const [isAddingJob, setIsAddingJob] = useState(false);
+  const [editingJob, setEditingJob] = useState<JobPost | null>(null);
+  const [jobForm, setJobForm] = useState<Omit<JobPost, 'id' | 'postedAt'>>({
+    title: '',
+    titleMr: '',
+    description: '',
+    descriptionMr: '',
+    keyRoles: [],
+    keyRolesMr: [],
+    workingTime: '',
+    workingTimeMr: '',
+    type: 'Full-time',
+    typeMr: 'पूर्ण वेळ',
+  });
+  const [keyRolesText, setKeyRolesText] = useState('');
+  const [keyRolesTextMr, setKeyRolesTextMr] = useState('');
+  const [appSortProfile, setAppSortProfile] = useState<string>('All');
+  const [confirmDeleteJobId, setConfirmDeleteJobId] = useState<string | null>(null);
+  const [confirmDeleteAppId, setConfirmDeleteAppId] = useState<string | null>(null);
+
   // Connection Indicator
   const [firebaseStatus, setFirebaseStatus] = useState({ active: false, configExists: false });
   const [firebaseInputConfig, setFirebaseInputConfig] = useState({
@@ -109,7 +136,7 @@ export default function AdminDashboard({ lang, onRefreshData }: AdminDashboardPr
   });
 
   // Active Controller Tab
-  const [activeTab, setActiveTab] = useState<'info' | 'products' | 'employees' | 'depts' | 'leaves' | 'dealers' | 'cms' | 'fb_integrate' | 'feedbacks'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'products' | 'employees' | 'depts' | 'leaves' | 'dealers' | 'cms' | 'fb_integrate' | 'feedbacks' | 'careers'>('info');
 
   // Interactive Form States
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -199,6 +226,12 @@ export default function AdminDashboard({ lang, onRefreshData }: AdminDashboardPr
     const abt = await dbStore.getSingleDoc<AboutUsData>('about_us', DEFAULT_ABOUT_US);
     setAboutUs(abt);
 
+    const jobsData = await dbStore.getList<JobPost>('jobs', INITIAL_JOBS);
+    setJobsList(jobsData);
+
+    const appsData = await dbStore.getList<JobApplication>('career_applications', []);
+    setJobApplicationsList(appsData);
+
     // check firebase status
     const isFb = dbStore.isUsingFirebase();
     const diskConfig = localStorage.getItem('pj_firebase_config');
@@ -217,6 +250,101 @@ export default function AdminDashboard({ lang, onRefreshData }: AdminDashboardPr
   const showToast = (msg: string) => {
     setAdminToast(msg);
     setTimeout(() => setAdminToast(''), 3500);
+  };
+
+  // --- ACTIONS: JOBS & CAREERS CRUD ---
+  const handleAddOrUpdateJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const jid = editingJob ? editingJob.id : `job-${Date.now()}`;
+      
+      const rolesEn = keyRolesText.split('\n').map(x => x.trim()).filter(Boolean);
+      const rolesMr = keyRolesTextMr.split('\n').map(x => x.trim()).filter(Boolean);
+
+      const item: JobPost = {
+        id: jid,
+        title: jobForm.title,
+        titleMr: jobForm.titleMr,
+        description: jobForm.description,
+        descriptionMr: jobForm.descriptionMr,
+        keyRoles: rolesEn,
+        keyRolesMr: rolesMr,
+        workingTime: jobForm.workingTime,
+        workingTimeMr: jobForm.workingTimeMr,
+        type: jobForm.type,
+        typeMr: jobForm.type === 'Full-time' ? 'पूर्ण वेळ' : jobForm.type === 'Part-time' ? 'अर्ध वेळ' : 'कंत्राटी',
+        postedAt: editingJob ? editingJob.postedAt : new Date().toISOString().split('T')[0]
+      };
+
+      await dbStore.saveItem<JobPost>('jobs', jid, item, INITIAL_JOBS);
+      showToast(editingJob ? "Job opening updated successfully!" : "New job opening posted successfully!");
+      
+      // reset form
+      setJobForm({
+        title: '',
+        titleMr: '',
+        description: '',
+        descriptionMr: '',
+        keyRoles: [],
+        keyRolesMr: [],
+        workingTime: '',
+        workingTimeMr: '',
+        type: 'Full-time',
+        typeMr: 'पूर्ण वेळ',
+      });
+      setKeyRolesText('');
+      setKeyRolesTextMr('');
+      setIsAddingJob(false);
+      setEditingJob(null);
+      
+      loadStats();
+    } catch (err) {
+      console.error(err);
+      showToast("Error processing job posting.");
+    }
+  };
+
+  const handleEditJobClick = (job: JobPost) => {
+    setEditingJob(job);
+    setJobForm({
+      title: job.title,
+      titleMr: job.titleMr,
+      description: job.description,
+      descriptionMr: job.descriptionMr,
+      keyRoles: job.keyRoles,
+      keyRolesMr: job.keyRolesMr,
+      workingTime: job.workingTime,
+      workingTimeMr: job.workingTimeMr,
+      type: job.type,
+      typeMr: job.typeMr,
+    });
+    setKeyRolesText(job.keyRoles.join('\n'));
+    setKeyRolesTextMr(job.keyRolesMr.join('\n'));
+    setIsAddingJob(true);
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      await dbStore.deleteItem<JobPost>('jobs', jobId, INITIAL_JOBS);
+      showToast("Job opening removed successfully.");
+      setConfirmDeleteJobId(null);
+      loadStats();
+    } catch (err) {
+      console.error(err);
+      showToast("Error deleting job posting.");
+    }
+  };
+
+  const handleDeleteApplication = async (appId: string) => {
+    try {
+      await dbStore.deleteItem<JobApplication>('career_applications', appId, []);
+      showToast("Application deleted successfully.");
+      setConfirmDeleteAppId(null);
+      loadStats();
+    } catch (err) {
+      console.error(err);
+      showToast("Error deleting application.");
+    }
   };
 
   // --- ACTIONS: FIREBASE INTEGRATION SETUP ---
@@ -627,6 +755,16 @@ export default function AdminDashboard({ lang, onRefreshData }: AdminDashboardPr
             >
               <MessageSquare className="h-4 w-4" />
               <span>Feedback Records ({farmerFeedbacks.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('careers')}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-black uppercase transition-all flex items-center space-x-2.5 ${
+                activeTab === 'careers' ? 'bg-[#0B5D1E] text-white shadow-xs' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Briefcase className="h-4 w-4" />
+              <span>Careers & Jobs ({jobsList.length}/{jobApplicationsList.length})</span>
             </button>
 
             <button
@@ -2911,6 +3049,417 @@ export default function AdminDashboard({ lang, onRefreshData }: AdminDashboardPr
                     </table>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'careers' && (
+              <div className="space-y-8 animate-fade-in text-left">
+                
+                {/* Header and Add Button */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-150 pb-5">
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                      <Briefcase className="h-5.5 w-5.5 text-[#0B5D1E]" />
+                      <span>Careers & Recruitment Board</span>
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Post new job openings, manage current positions, and review submissions from applicants.
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setIsAddingJob(!isAddingJob);
+                      setEditingJob(null);
+                      setJobForm({
+                        title: '',
+                        titleMr: '',
+                        description: '',
+                        descriptionMr: '',
+                        keyRoles: [],
+                        keyRolesMr: [],
+                        workingTime: '',
+                        workingTimeMr: '',
+                        type: 'Full-time',
+                        typeMr: 'पूर्ण वेळ',
+                      });
+                      setKeyRolesText('');
+                      setKeyRolesTextMr('');
+                    }}
+                    className="px-4 py-2.5 bg-[#0B5D1E] hover:bg-[#0B5D1E]/90 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center gap-1.5 shadow-sm transition"
+                  >
+                    {isAddingJob ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    <span>{isAddingJob ? 'Close Form' : 'Post New Job'}</span>
+                  </button>
+                </div>
+
+                {/* POST / EDIT JOB FORM */}
+                {isAddingJob && (
+                  <form onSubmit={handleAddOrUpdateJob} className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-6">
+                    <h4 className="text-sm font-black uppercase text-gray-700 border-b border-slate-200 pb-2">
+                      {editingJob ? 'Edit Job Posting / नोकरी संपादन' : 'Create New Job Opening / नवीन नोकरी नोंदणी'}
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Job Title (English) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Job Title (English) *</label>
+                        <input
+                          type="text"
+                          required
+                          value={jobForm.title}
+                          onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm"
+                          placeholder="e.g. Mechanical Maintenance Engineer"
+                        />
+                      </div>
+
+                      {/* Job Title (Marathi) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Job Title (Marathi / मराठी) *</label>
+                        <input
+                          type="text"
+                          required
+                          value={jobForm.titleMr}
+                          onChange={(e) => setJobForm({ ...jobForm, titleMr: e.target.value })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm"
+                          placeholder="उदा. मेकॅनिकल मेंटेनन्स इंजिनिअर"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Job Description (English) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Description (English) *</label>
+                        <textarea
+                          rows={3}
+                          required
+                          value={jobForm.description}
+                          onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm"
+                          placeholder="Describe the job profile, qualification and experience required..."
+                        />
+                      </div>
+
+                      {/* Job Description (Marathi) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Description (Marathi / मराठी) *</label>
+                        <textarea
+                          rows={3}
+                          required
+                          value={jobForm.descriptionMr}
+                          onChange={(e) => setJobForm({ ...jobForm, descriptionMr: e.target.value })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm"
+                          placeholder="नोकरीचे स्वरूप, आवश्यक पात्रता आणि अनुभवाबद्दल माहिती..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Job Type */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Job Type *</label>
+                        <select
+                          value={jobForm.type}
+                          onChange={(e) => setJobForm({ ...jobForm, type: e.target.value as any })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm font-bold text-gray-700"
+                        >
+                          <option value="Full-time">Full-time</option>
+                          <option value="Part-time">Part-time</option>
+                          <option value="Contract">Contract</option>
+                        </select>
+                      </div>
+
+                      {/* Working Hours (English) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Working Time (English) *</label>
+                        <input
+                          type="text"
+                          required
+                          value={jobForm.workingTime}
+                          onChange={(e) => setJobForm({ ...jobForm, workingTime: e.target.value })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm"
+                          placeholder="e.g. 9:00 AM - 6:00 PM"
+                        />
+                      </div>
+
+                      {/* Working Hours (Marathi) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Working Time (Marathi / मराठी) *</label>
+                        <input
+                          type="text"
+                          required
+                          value={jobForm.workingTimeMr}
+                          onChange={(e) => setJobForm({ ...jobForm, workingTimeMr: e.target.value })}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm"
+                          placeholder="उदा. सकाळी ९:०० ते संध्याकाळी ६:००"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Key Roles (English) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Key Responsibilities (English - One per line)</label>
+                        <textarea
+                          rows={4}
+                          value={keyRolesText}
+                          onChange={(e) => setKeyRolesText(e.target.value)}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm font-mono"
+                          placeholder="Maintain production logs&#10;Audit chemical storage&#10;Support field dealers"
+                        />
+                      </div>
+
+                      {/* Key Roles (Marathi) */}
+                      <div>
+                        <label className="block text-3xs font-black uppercase text-gray-550 mb-1">Key Responsibilities (Marathi / मराठी - एका ओळीत एक)</label>
+                        <textarea
+                          rows={4}
+                          value={keyRolesTextMr}
+                          onChange={(e) => setKeyRolesTextMr(e.target.value)}
+                          className="w-full px-3.5 py-2.5 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm font-mono"
+                          placeholder="उत्पादन नोंदी अद्ययावत ठेवणे&#10;केमिकल साठवणुकीचे ऑडिट करणे&#10;डीलर्सना मदत करणे"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingJob(false);
+                          setEditingJob(null);
+                        }}
+                        className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-black uppercase tracking-wider rounded-xl transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 bg-[#0B5D1E] hover:bg-[#0B5D1E]/90 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition"
+                      >
+                        {editingJob ? 'Update Opening' : 'Post Opening'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* CURRENT JOBS TABLE */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-500">
+                    Active Job Postings ({jobsList.length})
+                  </h4>
+
+                  {jobsList.length === 0 ? (
+                    <div className="p-8 text-center bg-gray-50 border border-dashed rounded-2xl text-stone-400">
+                      No jobs listed in careers currently.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto border border-gray-150 rounded-2xl shadow-sm bg-white">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-150 font-black uppercase text-gray-500">
+                            <th className="p-4">Title</th>
+                            <th className="p-4">Marathi Title</th>
+                            <th className="p-4">Type</th>
+                            <th className="p-4">Hours</th>
+                            <th className="p-4">Date Posted</th>
+                            <th className="p-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {jobsList.map((job) => (
+                            <tr key={job.id} className="hover:bg-slate-50/50">
+                              <td className="p-4 font-bold text-gray-900">{job.title}</td>
+                              <td className="p-4 text-gray-650">{job.titleMr}</td>
+                              <td className="p-4 font-mono font-bold text-[#0B5D1E]">{job.type}</td>
+                              <td className="p-4 text-gray-500">{job.workingTime}</td>
+                              <td className="p-4 text-gray-500">{job.postedAt}</td>
+                              <td className="p-4 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditJobClick(job)}
+                                    className="p-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded"
+                                    title="Edit Job"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                  </button>
+
+                                  {confirmDeleteJobId === job.id ? (
+                                    <div className="flex items-center gap-1 bg-red-50 p-1 border border-red-200 rounded">
+                                      <span className="text-[9px] text-red-700 font-bold px-1">Delete?</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteJob(job.id)}
+                                        className="bg-red-600 text-white rounded px-1.5 py-0.5 text-[9px] font-bold"
+                                      >
+                                        Yes
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmDeleteJobId(null)}
+                                        className="text-gray-500 text-[9px]"
+                                      >
+                                        No
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteJobId(job.id)}
+                                      className="p-1.5 border border-red-200 text-red-650 hover:bg-red-50 rounded"
+                                      title="Delete Job"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* SUBMITTED APPLICATIONS VIEW & FILTER SECTION */}
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <h4 className="text-sm font-black uppercase text-gray-800">
+                        Submitted Applications ({jobApplicationsList.length})
+                      </h4>
+                      <p className="text-2xs text-gray-400">Filter applicants by job profiles and download their uploaded resume.</p>
+                    </div>
+
+                    {/* Sorting dropdown */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xs font-extrabold text-gray-500 uppercase">Filter Profile:</span>
+                      <select
+                        value={appSortProfile}
+                        onChange={(e) => setAppSortProfile(e.target.value)}
+                        className="px-3 py-2 border border-gray-200 bg-white rounded-xl text-xs font-bold text-gray-700 focus:outline-none"
+                      >
+                        <option value="All">All Job Positions</option>
+                        {Array.from(new Set(jobApplicationsList.map(a => a.jobTitle))).map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Filtered Application Output */}
+                  {(() => {
+                    const filteredApps = appSortProfile === 'All' 
+                      ? jobApplicationsList 
+                      : jobApplicationsList.filter(a => a.jobTitle === appSortProfile);
+
+                    if (filteredApps.length === 0) {
+                      return (
+                        <div className="p-8 text-center bg-gray-50 border border-dashed rounded-2xl text-stone-400">
+                          No applications found for the selected filter.
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {filteredApps.map((app) => (
+                          <div 
+                            key={app.id} 
+                            className="bg-white rounded-2xl p-5 border border-gray-200 shadow-3xs hover:shadow-2xs transition-all space-y-4"
+                          >
+                            <div className="flex justify-between items-start gap-4 border-b border-gray-100 pb-3">
+                              <div>
+                                <h5 className="font-extrabold text-sm text-gray-900">{app.fullName}</h5>
+                                <span className="text-[10px] text-[#0B5D1E] font-black bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 mt-1 inline-block">
+                                  {app.jobTitle}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-gray-400 font-mono">{app.submittedAt}</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <span className="text-[10px] text-gray-400 block uppercase font-bold">Village / City</span>
+                                <span className="text-gray-800 font-extrabold">{app.village}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-gray-400 block uppercase font-bold">Gender</span>
+                                <span className="text-gray-800 font-bold">{app.gender} / {app.genderMr}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-gray-400 block uppercase font-bold">Mobile</span>
+                                <span className="text-[#0B5D1E] font-mono select-all font-bold">{app.mobile}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-gray-400 block uppercase font-bold">Email</span>
+                                <span className="text-gray-800 font-mono select-all text-[11px]">{app.email}</span>
+                              </div>
+                            </div>
+
+                            {/* Resume Viewer/Downloader */}
+                            <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 flex justify-between items-center gap-4">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="h-5 w-5 text-emerald-600 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-gray-800 truncate" title={app.resumeName}>
+                                    {app.resumeName}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">Device Uploaded File</p>
+                                </div>
+                              </div>
+
+                              <a
+                                href={app.resume}
+                                download={app.resumeName || 'resume_attachment'}
+                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-black text-[10px] uppercase tracking-wider flex items-center gap-1 transition"
+                              >
+                                <Download className="h-3 w-3" />
+                                <span>Download</span>
+                              </a>
+                            </div>
+
+                            <div className="flex justify-end pt-2">
+                              {confirmDeleteAppId === app.id ? (
+                                <div className="flex items-center gap-2 bg-red-50 p-1.5 border border-red-200 rounded-lg">
+                                  <span className="text-[10px] text-red-700 font-bold px-1">Remove applicant profile?</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteApplication(app.id)}
+                                    className="bg-red-600 text-white rounded-md px-2.5 py-1 text-[10px] font-black uppercase"
+                                  >
+                                    Confirm
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteAppId(null)}
+                                    className="text-gray-550 text-[10px] font-bold hover:text-gray-750 px-1"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteAppId(app.id)}
+                                  className="text-red-650 hover:text-red-800 font-bold text-[10px] uppercase flex items-center gap-1.5 px-3 py-1.5 border border-red-100 hover:bg-red-50 rounded-lg transition"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <span>Delete Application</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
               </div>
             )}
 
