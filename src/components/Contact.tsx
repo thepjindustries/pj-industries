@@ -110,8 +110,8 @@ export default function Contact({ lang, products, onContactSubmit }: ContactProp
 
                 <div className="flex items-center space-x-3.5">
                   <Mail className="h-4.5 w-4.5 text-accent shrink-0" />
-                  <a href="mailto:info@pjindustries.co.in" className="hover:underline text-cream/90 font-mono">
-                    info@pjindustries.co.in
+                  <a href="mailto:contactpjindustries@gmail.com" className="hover:underline text-cream/90 font-mono">
+                    contactpjindustries@gmail.com
                   </a>
                 </div>
               </div>
