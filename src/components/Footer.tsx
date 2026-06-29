@@ -90,6 +90,15 @@ export default function Footer({ lang, setActiveTab }: FooterProps) {
                   {lang === 'en' ? 'Help & Support Desk' : 'संपर्क साधा'}
                 </button>
               </li>
+              <li>
+                <button 
+                  onClick={() => setActiveTab('careers')} 
+                  className="text-emerald-400 hover:text-emerald-300 font-extrabold text-left hover:translate-x-1.5 transition-all duration-300 flex items-center gap-1.5"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  {lang === 'en' ? 'Careers (Apply Job)' : 'करिअर (नोकरी अर्ज)'}
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -132,8 +141,8 @@ export default function Footer({ lang, setActiveTab }: FooterProps) {
 
               <div className="flex items-center space-x-2.5">
                 <Mail className="h-4.5 w-4.5 text-accent" />
-                <a href="mailto:info@pjindustries.co.in" className="hover:text-accent transition-colors text-xs font-mono">
-                  info@pjindustries.co.in
+                <a href="mailto:contactpjindustries@gmail.com" className="hover:text-accent transition-colors text-xs font-mono">
+                  contactpjindustries@gmail.com
                 </a>
               </div>
 
