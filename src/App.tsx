@@ -8,6 +8,7 @@ import Dealer from './components/Dealer';
 import Contact from './components/Contact';
 import StaffDashboard from './components/StaffDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import Careers from './components/Careers';
 
 import { 
   dbStore, 
@@ -69,6 +70,12 @@ export default function App() {
 
     if (localStorage.getItem('pj_session_admin') === 'true') {
       setCurrentAdmin(true);
+    }
+
+    // Check for jobId in URL to deep-link to careers screen
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('jobId')) {
+      setActiveTab('careers');
     }
   }, []);
 
@@ -229,6 +236,10 @@ export default function App() {
             products={productsList}
             onContactSubmit={handleContactSubmit}
           />
+        )}
+
+        {activeTab === 'careers' && (
+          <Careers lang={lang} />
         )}
 
         {/* STAFF LOGIN VIEW PORT */}
