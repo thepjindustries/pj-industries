@@ -193,6 +193,46 @@
         "productionPhotos": { "type": "array" }
       },
       "required": ["story", "storyMr", "mission", "missionMr", "vision", "visionMr"]
+    },
+    "Job": {
+      "title": "Job",
+      "description": "Job opening posting in PJ Industries careers board",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "titleMr": { "type": "string" },
+        "description": { "type": "string" },
+        "descriptionMr": { "type": "string" },
+        "keyRoles": { "type": "array" },
+        "keyRolesMr": { "type": "array" },
+        "workingTime": { "type": "string" },
+        "workingTimeMr": { "type": "string" },
+        "type": { "type": "string", "enum": ["Full-time", "Part-time", "Contract"] },
+        "typeMr": { "type": "string" },
+        "postedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "titleMr", "description", "descriptionMr", "workingTime", "workingTimeMr", "type", "typeMr", "postedAt"]
+    },
+    "CareerApplication": {
+      "title": "CareerApplication",
+      "description": "Job application submitted by an applicant",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "jobId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "fullName": { "type": "string" },
+        "village": { "type": "string" },
+        "mobile": { "type": "string" },
+        "email": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
+        "genderMr": { "type": "string" },
+        "resume": { "type": "string" },
+        "resumeName": { "type": "string" },
+        "submittedAt": { "type": "string" }
+      },
+      "required": ["id", "jobId", "jobTitle", "fullName", "village", "mobile", "email", "gender", "genderMr", "resume", "resumeName", "submittedAt"]
     }
   },
   "firestore": {
@@ -235,6 +275,14 @@
     "/configs/{configId}": {
       "schema": { "$ref": "#/entities/AboutUs" },
       "description": "CMS text content configurations like about_us"
+    },
+    "/jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/Job" },
+      "description": "Job openings posted on careers board"
+    },
+    "/career_applications/{appId}": {
+      "schema": { "$ref": "#/entities/CareerApplication" },
+      "description": "Applicant submissions for jobs"
     }
   }
 }
