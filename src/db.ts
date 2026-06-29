@@ -189,6 +189,83 @@ export interface AboutUsData {
   }[];
 }
 
+export interface JobPost {
+  id: string;
+  title: string;
+  titleMr: string;
+  description: string;
+  descriptionMr: string;
+  keyRoles: string[];
+  keyRolesMr: string[];
+  workingTime: string;
+  workingTimeMr: string;
+  type: 'Full-time' | 'Part-time' | 'Contract';
+  typeMr: string;
+  postedAt: string;
+}
+
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  fullName: string;
+  village: string;
+  mobile: string;
+  email: string;
+  gender: 'Male' | 'Female' | 'Other';
+  genderMr: string;
+  resume: string; // base64 string
+  resumeName: string;
+  submittedAt: string;
+}
+
+export const INITIAL_JOBS: JobPost[] = [
+  {
+    id: 'job-sales-1',
+    title: 'Area Sales Manager - Cattle Feed Division',
+    titleMr: 'क्षेत्रीय विक्री व्यवस्थापक - पशू खाद्य विभाग',
+    description: 'We are looking for an experienced sales manager to handle dealer distribution networks and farmer outreach across Western Maharashtra.',
+    descriptionMr: 'आम्हाला पश्चिम महाराष्ट्रातील डीलर नेटवर्क आणि थेट शेतकरी संपर्काचे व्यवस्थापन करण्यासाठी अनुभवी विक्री व्यवस्थापकाची आवश्यकता आहे.',
+    keyRoles: [
+      'Appoint new dealers and sub-dealers in rural zones',
+      'Conduct dairy farmer guidance and counseling seminars',
+      'Achieve monthly and quarterly sales volume targets'
+    ],
+    keyRolesMr: [
+      'ग्रामीण भागात नवीन डीलर्स आणि सब-डीलर्स नियुक्त करणे',
+      'दूध उत्पादक शेतकऱ्यांसाठी मार्गदर्शन व सल्ला शिबिरे आयोजित करणे',
+      'मासिक आणि त्रैमासिक विक्री उद्दिष्टे पूर्ण करणे'
+    ],
+    workingTime: '9:30 AM - 6:30 PM',
+    workingTimeMr: 'सकाळी ९:३० ते संध्याकाळी ६:३०',
+    type: 'Full-time',
+    typeMr: 'पूर्ण वेळ',
+    postedAt: '2026-06-15'
+  },
+  {
+    id: 'job-ops-1',
+    title: 'Steam Boiler Plant Operator',
+    titleMr: 'स्टीम बॉयलर प्लांट ऑपरेटर',
+    description: 'Responsible for supervising and monitoring high-pressure steam boilers and twin-shaft extruders at our Ranjangaon factory.',
+    descriptionMr: 'रांजणगाव येथील कारखान्यात हाय-प्रेशर स्टीम बॉयलर आणि एक्सट्रूडर मशीनचे सुरक्षित संचलन व देखरेख करणे.',
+    keyRoles: [
+      'Monitor boiler pressure, steam injection and pellet mills',
+      'Ensure standard safety and compliance parameters are met',
+      'Coordinate with NPD scientists for formulation feeds'
+    ],
+    keyRolesMr: [
+      'बॉयलर प्रेशर, स्टीम इंजेक्शन आणि पेलेट मिल्सची देखरेख करणे',
+      'कारखान्यातील सुरक्षा नियमांचे काटेकोरपणे पालन करणे',
+      'फीड फॉर्म्युलेशननुसार मशीन सेटिंग्ज बदलणे'
+    ],
+    workingTime: '8:00 AM - 4:00 PM (Shift A)',
+    workingTimeMr: 'सकाळी ८:०० ते दुपारी ४:०० (शिफ्ट ए)',
+    type: 'Full-time',
+    typeMr: 'पूर्ण वेळ',
+    postedAt: '2026-06-20'
+  }
+];
+
 // Default Pre-seeded high quality data
 export const INITIAL_PRODUCTS: Product[] = [
   {
